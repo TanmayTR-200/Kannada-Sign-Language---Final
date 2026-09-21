@@ -1,0 +1,455 @@
+﻿
+==============================================================================
+### LSTM: Deep Learning Models\LSTM\LSTM.ipynb
+==============================================================================
+
+----- LSTM CELL 0 -----
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout, BatchNormalization, Masking
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.utils import class_weight
+from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+from google.colab import drive
+
+----- LSTM CELL 2 -----
+# Normalize features
+scaler = StandardScaler()
+X_reshaped = X.reshape(-1, X.shape[-1])
+X_scaled = scaler.fit_transform(X_reshaped).reshape(X.shape)
+
+# Split data (70% train, 20% test, 10% validation)
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, stratify=y, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.125, stratify=y_train, random_state=42)
+print(f"X_train shape: {X_train.shape}, X_val shape: {X_val.shape}, X_test shape: {X_test.shape}")
+
+# Convert labels to one-hot encoding
+num_classes = 33
+y_train_cat = tf.keras.utils.to_categorical(y_train, num_classes=num_classes)
+y_val_cat = tf.keras.utils.to_categorical(y_val, num_classes=num_classes)
+y_test_cat = tf.keras.utils.to_categorical(y_test, num_classes=num_classes)
+print(f"Shape of y_train_cat: {y_train_cat.shape}")
+print(f"Shape of y_val_cat: {y_val_cat.shape}")
+print(f"Shape of y_test_cat: {y_test_cat.shape}")
+
+----- LSTM CELL 5 -----
+# Define callbacks
+early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)  # Adjusted patience
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.00001)
+
+# Train the model
+history = model.fit(X_train, y_train_cat,
+                    validation_data=(X_val, y_val_cat),
+                    epochs=200,
+                    batch_size=32,
+                    class_weight=class_weight_dict,
+                    callbacks=[early_stopping, reduce_lr],
+                    verbose=1)
+
+----- LSTM CELL 8 -----
+from sklearn.metrics import classification_report, accuracy_score
+
+# Evaluate the model on the test set
+loss, accuracy = model.evaluate(X_test, y_test_cat, verbose=0)
+print(f"Test Accuracy: {accuracy:.4f}")
+
+# Generate predictions for the test set
+y_pred = model.predict(X_test)
+y_pred_classes = np.argmax(y_pred, axis=1)
+y_true_classes = np.argmax(y_test_cat, axis=1)
+
+# Generate and print the classification report
+report = classification_report(y_true_classes, y_pred_classes, target_names=CLASSES, output_dict=True)
+print("\nClassification Report:")
+print(classification_report(y_true_classes, y_pred_classes, target_names=CLASSES))
+
+# Print macro, micro, and weighted average metrics
+print("\nAverages:")
+print("  Macro Average:")
+print(f"    Precision: {report['macro avg']['precision']:.4f}")
+print(f"    Recall: {report['macro avg']['recall']:.4f}")
+print(f"    F1-score: {report['macro avg']['f1-score']:.4f}")
+print(f"    Support: {report['macro avg']['support']}")
+
+print("\n  Micro Average:")
+print(f"    Precision: {report['accuracy']:.4f}") # Micro average precision is accuracy
+print(f"    Recall: {report['accuracy']:.4f}")    # Micro average recall is accuracy
+print(f"    F1-score: {report['accuracy']:.4f}")    # Micro average f1-score is accuracy
+print(f"    Support: {report['accuracy'] * report['macro avg']['support']:.0f}") # Total number of samples
+
+print("\n  Weighted Average:")
+print(f"    Precision: {report['weighted avg']['precision']:.4f}")
+print(f"    Recall: {report['weighted avg']['recall']:.4f}")
+print(f"    F1-score: {report['weighted avg']['f1-score']:.4f}")
+print(f"    Support: {report['weighted avg']['support']}")
+
+==============================================================================
+### BiLSTM: Deep Learning Models\BiLSTM\code.ipynb
+==============================================================================
+
+----- BiLSTM CELL 1 -----
+import tensorflow as tf
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import (
+    Bidirectional, LSTM, Dense, Dropout, BatchNormalization,
+    Masking, Input
+)
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+
+
+----- BiLSTM CELL 4 -----
+# Normalize data
+X_reshaped = X.reshape(-1, X.shape[-1])
+scaler = StandardScaler()
+scaler.fit(X_reshaped)
+X_normalized = scaler.transform(X_reshaped)
+X = X_normalized.reshape(X.shape)
+
+print("X data normalized.")
+print("X shape:", X.shape)
+print("y shape:", y.shape)
+
+
+----- BiLSTM CELL 5 -----
+# Split the data into training, validation, and test sets
+train_size = 0.7
+val_size = 0.1
+test_size = 0.2
+
+X_train, X_rem, y_train, y_rem = train_test_split(X, y, train_size=train_size, random_state=42, stratify=y)
+X_val, X_test, y_val, y_test = train_test_split(X_rem, y_rem, test_size=(test_size/(val_size + test_size)), random_state=42, stratify=y_rem)
+
+print(f"Shape of X_train: {X_train.shape}")
+print(f"Shape of y_train: {y_train.shape}")
+print(f"Shape of X_val: {X_val.shape}")
+print(f"Shape of y_val: {y_val.shape}")
+print(f"Shape of X_test: {X_test.shape}")
+print(f"Shape of y_test: {y_test.shape}")
+
+# Convert labels to one-hot encoding
+y_train_cat = to_categorical(y_train, num_classes=NUM)
+y_val_cat = to_categorical(y_val, num_classes=NUM)
+y_test_cat = to_categorical(y_test, num_classes=NUM)
+
+print(f"Shape of y_train_cat: {y_train_cat.shape}")
+print(f"Shape of y_val_cat: {y_val_cat.shape}")
+print(f"Shape of y_test_cat: {y_test_cat.shape}")
+
+----- BiLSTM CELL 7 -----
+# Define callbacks for training
+early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, verbose=1)
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.00001, verbose=1)
+callbacks_list = [early_stopping, reduce_lr]
+
+# Train the model
+history = model_improved_BiLSTM.fit(
+    X_train,
+    y_train_cat,
+    epochs=200,
+    batch_size=BATCH_SIZE,
+    validation_data=(X_val, y_val_cat),
+    callbacks=callbacks_list
+)
+
+----- BiLSTM CELL 11 -----
+from sklearn.metrics import classification_report, accuracy_score
+
+# Evaluate the model on the test set
+loss, accuracy = model_improved_BiLSTM.evaluate(X_test, y_test_cat, verbose=0)
+print(f"Test Accuracy: {accuracy:.4f}")
+
+# Generate predictions for the test set
+y_pred = model_improved_BiLSTM.predict(X_test)
+y_pred_classes = np.argmax(y_pred, axis=1)
+y_true_classes = np.argmax(y_test_cat, axis=1)
+
+# Generate and print the classification report
+report = classification_report(y_true_classes, y_pred_classes, target_names=CLASSES, output_dict=True)
+print("\nClassification Report:")
+print(classification_report(y_true_classes, y_pred_classes, target_names=CLASSES))
+
+# Print macro, micro, and weighted average metrics
+print("\nAverages:")
+print("  Macro Average:")
+print(f"    Precision: {report['macro avg']['precision']:.4f}")
+print(f"    Recall: {report['macro avg']['recall']:.4f}")
+print(f"    F1-score: {report['macro avg']['f1-score']:.4f}")
+print(f"    Support: {report['macro avg']['support']}")
+
+print("\n  Micro Average:")
+print(f"    Precision: {report['accuracy']:.4f}") # Micro average precision is accuracy
+print(f"    Recall: {report['accuracy']:.4f}")    # Micro average recall is accuracy
+print(f"    F1-score: {report['accuracy']:.4f}")    # Micro average f1-score is accuracy
+print(f"    Support: {report['accuracy'] * report['macro avg']['support']:.0f}") # Total number of samples
+
+print("\n  Weighted Average:")
+print(f"    Precision: {report['weighted avg']['precision']:.4f}")
+print(f"    Recall: {report['weighted avg']['recall']:.4f}")
+print(f"    F1-score: {report['weighted avg']['f1-score']:.4f}")
+print(f"    Support: {report['weighted avg']['support']}")
+
+==============================================================================
+### Transformers: Deep Learning Models\Transformers\code.ipynb
+==============================================================================
+
+----- Transformers CELL 2 -----
+import tensorflow as tf
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import (
+    Conv2D, MaxPooling2D, BatchNormalization, Flatten, Dense, Dropout,
+    LSTM, TimeDistributed, Bidirectional,
+    Conv1D, MaxPooling1D, SeparableConv1D, SeparableConv2D,
+    Activation, Masking, Input, LayerNormalization
+)
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.optimizers import Adam, RMSprop
+
+----- Transformers CELL 7 -----
+from sklearn.preprocessing import StandardScaler
+
+# Reshape X to be 2D for StandardScaler
+X_reshaped = X.reshape(-1, X.shape[-1])
+
+# Initialize and fit the StandardScaler
+scaler = StandardScaler()
+scaler.fit(X_reshaped)
+
+# Transform the data and reshape back to the original 3D shape
+X_normalized = scaler.transform(X_reshaped)
+X = X_normalized.reshape(X.shape)
+
+print("X data normalized.")
+print("X shape:", X.shape)
+print("y shape:", y.shape)
+
+----- Transformers CELL 8 -----
+# prompt: train test and validate the data in the ratio = 7:2:1
+
+# Calculate the sizes for train, validation, and test sets
+train_size = 0.7
+val_size = 0.1
+test_size = 0.2
+
+# Split the data into training and remaining (validation + test)
+X_train, X_rem, y_train, y_rem = train_test_split(X, y, train_size=train_size, random_state=42, stratify=y)
+
+# Calculate the ratio of validation and test sets from the remaining data
+# val_size_rem = val_size / (val_size + test_size)
+# test_size_rem = test_size / (val_size + test_size) # This is 1 - val_size_rem
+
+# Split the remaining data into validation and test sets
+# Since we want a 7:2:1 split of the *original* data, the ratio of val:test
+# within the remaining data (y_rem) is val_size / (val_size + test_size)
+X_val, X_test, y_val, y_test = train_test_split(X_rem, y_rem, test_size=(test_size/(val_size + test_size)), random_state=42, stratify=y_rem)
+
+
+print(f"Shape of X_train: {X_train.shape}")
+print(f"Shape of y_train: {y_train.shape}")
+print(f"Shape of X_val: {X_val.shape}")
+print(f"Shape of y_val: {y_val.shape}")
+print(f"Shape of X_test: {X_test.shape}")
+print(f"Shape of y_test: {y_test.shape}")
+
+# Convert labels to one-hot encoding
+y_train_cat = to_categorical(y_train, num_classes=NUM)
+y_val_cat = to_categorical(y_val, num_classes=NUM)
+y_test_cat = to_categorical(y_test, num_classes=NUM)
+
+print(f"Shape of y_train_cat: {y_train_cat.shape}")
+print(f"Shape of y_val_cat: {y_val_cat.shape}")
+print(f"Shape of y_test_cat: {y_test_cat.shape}")
+
+----- Transformers CELL 11 -----
+early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, verbose=1)
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.00001, verbose=1)
+callbacks_list = [early_stopping, reduce_lr]
+
+
+history = transformer_model.fit(
+    X_train,
+    y_train_cat, # Use one-hot encoded training labels
+    epochs=200,
+    batch_size=BATCH_SIZE,
+    validation_data=(X_val, y_val_cat), # Use one-hot encoded validation labels
+    callbacks=callbacks_list
+)
+
+----- Transformers CELL 14 -----
+from sklearn.metrics import classification_report, accuracy_score
+
+# Evaluate the model on the test set
+loss, accuracy = transformer_model.evaluate(X_test, y_test_cat, verbose=0)
+print(f"Test Accuracy: {accuracy:.4f}")
+
+# Generate predictions for the test set
+y_pred = transformer_model.predict(X_test)
+y_pred_classes = np.argmax(y_pred, axis=1)
+y_true_classes = np.argmax(y_test_cat, axis=1)
+
+# Generate and print the classification report
+report = classification_report(y_true_classes, y_pred_classes, target_names=CLASSES, output_dict=True)
+print("\nClassification Report:")
+print(classification_report(y_true_classes, y_pred_classes, target_names=CLASSES))
+
+# Print macro, micro, and weighted average metrics
+print("\nAverages:")
+print("  Macro Average:")
+print(f"    Precision: {report['macro avg']['precision']:.4f}")
+print(f"    Recall: {report['macro avg']['recall']:.4f}")
+print(f"    F1-score: {report['macro avg']['f1-score']:.4f}")
+print(f"    Support: {report['macro avg']['support']}")
+
+print("\n  Micro Average:")
+print(f"    Precision: {report['accuracy']:.4f}") # Micro average precision is accuracy
+print(f"    Recall: {report['accuracy']:.4f}")    # Micro average recall is accuracy
+print(f"    F1-score: {report['accuracy']:.4f}")    # Micro average f1-score is accuracy
+print(f"    Support: {report['accuracy'] * report['macro avg']['support']:.0f}") # Total number of samples
+
+print("\n  Weighted Average:")
+print(f"    Precision: {report['weighted avg']['precision']:.4f}")
+print(f"    Recall: {report['weighted avg']['recall']:.4f}")
+print(f"    F1-score: {report['weighted avg']['f1-score']:.4f}")
+print(f"    Support: {report['weighted avg']['support']}")
+
+==============================================================================
+### Stacking: Ensemble Learning\Stacking Ensemble.ipynb
+==============================================================================
+
+----- Stacking CELL 2 -----
+import os
+import time
+import numpy as np
+import pandas as pd
+import cv2
+import tensorflow as tf
+import tensorflow_model_optimization as tfmot
+import matplotlib.pyplot as plt
+import seaborn as sns
+from google.colab import drive
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score
+from tqdm.notebook import tqdm
+from tensorflow.keras import layers, models
+import timeit
+
+----- Stacking CELL 4 -----
+import numpy as np
+from sklearn.model_selection import train_test_split, KFold
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.utils.class_weight import compute_class_weight
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix, classification_report
+from tensorflow.keras.models import load_model
+import joblib
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Define gesture classes
+CLASSES = ['Afternoon', 'Apple', 'April', 'August', 'Banana', 'Day', 'December', 'Evening',
+           'Febraury', 'Friday', 'Grapes', 'January', 'July', 'June', 'March', 'May', 'Monday',
+           'Morning', 'Night', 'November', 'October', 'Orange', 'Rainy', 'Saturday', 'September',
+           'Summer', 'Sunday', 'Thursday', 'Tuesday', 'Valencia_Orange', 'Watermelon', 'Wednesday', 'Winter']
+num_classes = len(CLASSES)
+
+# Load and split data (70% train, 10% val, 20% test)
+X = np.load('X_195_75.npy')
+y = np.load('y_195_75.npy')
+
+# Check for NaN or inf in input data
+if np.any(np.isnan(X)) or np.any(np.isinf(X)):
+    raise ValueError("Input X contains NaN or inf values. Please preprocess the data.")
+
+X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
+X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=2/3, random_state=42, stratify=y_temp)
+
+print("Train shape:", X_train.shape, y_train.shape)
+print("Validation shape:", X_val.shape, y_val.shape)
+print("Test shape:", X_test.shape, y_test.shape)
+
+----- Stacking CELL 5 -----
+# Normalize validation and test sets (refit scaler on X_train)
+scaler = StandardScaler()
+scaler.fit(X_train.reshape(-1, X_train.shape[-1]))
+X_val = scaler.transform(X_val.reshape(-1, X_val.shape[-1])).reshape(X_val.shape)
+X_test = scaler.transform(X_test.reshape(-1, X_test.shape[-1])).reshape(X_test.shape)
+
+# Check for NaN or inf after normalization
+if np.any(np.isnan(X_val)) or np.any(np.isinf(X_val)):
+    raise ValueError("Normalized X_val contains NaN or inf values.")
+if np.any(np.isnan(X_test)) or np.any(np.isinf(X_test)):
+    raise ValueError("Normalized X_test contains NaN or inf values.")
+
+# Save the new scaler for future use
+joblib.dump(scaler, 'scaler_new.pkl')  # always download this scaler_new.pkl
+
+# Load pre-trained models
+lstm_model = load_model('/content/KSL_LSTM.keras')
+transformer_model = load_model('/content/KSL_transformer.keras')
+bi_lstm_model = load_model('/content/KSL_BiLSTM.keras')
+
+
+
+----- Stacking CELL 7 -----
+# Compute class weights for meta-model
+class_weights = compute_class_weight('balanced', classes=np.unique(y_val), y=y_val)
+class_weight_dict = dict(enumerate(class_weights))
+print("Class weights for meta-model:", dict(zip(CLASSES, class_weights)))
+
+# Step 8: Train meta-model
+meta_model = LogisticRegression(multi_class='multinomial', max_iter=1000, class_weight=class_weight_dict, random_state=42)
+meta_model.fit(meta_features_val, y_val)
+
+
+
+----- Stacking CELL 8 -----
+# Evaluate
+final_predictions = meta_model.predict(meta_features_test)
+accuracy = accuracy_score(y_test, final_predictions)
+f1 = f1_score(y_test, final_predictions, average='weighted')
+print(f"Stacking Ensemble Accuracy: {accuracy:.4f}")
+print(f"Stacking Ensemble Weighted F1-Score: {f1:.4f}")
+
+# Generate the classification report as a dictionary
+report = classification_report(y_test, final_predictions, output_dict=True)
+
+# Print the full classification report
+print("\nClassification Report:")
+print(classification_report(y_test, final_predictions))
+
+# Print macro, micro, and weighted average metrics
+print("\nAverages:")
+print("  Macro Average:")
+print(f"    Precision: {report['macro avg']['precision']:.4f}")
+print(f"    Recall: {report['macro avg']['recall']:.4f}")
+print(f"    F1-score: {report['macro avg']['f1-score']:.4f}")
+print(f"    Support: {report['macro avg']['support']}")
+
+print("\n  Micro Average:")
+print(f"    Precision: {report['accuracy']:.4f}")  # Micro average precision is accuracy
+print(f"    Recall: {report['accuracy']:.4f}")     # Micro average recall is accuracy
+print(f"    F1-score: {report['accuracy']:.4f}")     # Micro average F1-score is accuracy
+print(f"    Support: {report['macro avg']['support']}")  # Total number of samples
+
+print("\n  Weighted Average:")
+print(f"    Precision: {report['weighted avg']['precision']:.4f}")
+print(f"    Recall: {report['weighted avg']['recall']:.4f}")
+print(f"    F1-score: {report['weighted avg']['f1-score']:.4f}")
+print(f"    Support: {report['weighted avg']['support']}")

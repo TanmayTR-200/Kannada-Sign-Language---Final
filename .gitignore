@@ -1,0 +1,20 @@
+# --- Python ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- Large data (hosted on Google Drive - too big for GitHub) ---
+*.npy
+
+# --- Superseded experiments / junk ---
+*.bak
+old_results/
+ALL_SAMPLES_CSV/
+*.tmp
+
+# --- Editor / OS junk ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

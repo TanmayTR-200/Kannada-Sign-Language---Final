@@ -1,0 +1,25 @@
+{
+  "// --- Dynamic Kannada Sign Language Recognition: Pylance / Pyright config ---": "",
+  "// Why this file exists": [
+    "TensorFlow ships no type stubs (`py.typed`) for its nested module paths such as",
+    "`tensorflow.keras`, `tensorflow.keras.layers`, `tensorflow.keras.optimizers`.",
+    "Pylance therefore emits `reportMissingModuleSource` (severity 4 = hint) for every",
+    "such import, even though the imports resolve perfectly at runtime.",
+    "These are noise, not real errors: TensorFlow is installed and every script here runs."
+  ],
+  "// What we do instead": [
+    "Turn off only `reportMissingModuleSource` (the unresolved-source-stub hint) while",
+    "leaving every other type check enabled, so genuine mistakes are still reported."
+  ],
+  "reportMissingModuleSource": "none",
+  "reportMissingImports": "warning",
+  "reportMissingTypeStubs": "none",
+  "typeCheckingMode": "basic",
+  "extraPaths": [
+    "New Models"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.ipynb_checkpoints"
+  ]
+}
