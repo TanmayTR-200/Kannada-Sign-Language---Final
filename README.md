@@ -11,9 +11,9 @@ of them.
 
 | Model | Accuracy | Precision | Recall | F1 |
 |---|---|---|---|---|
-| **GCN (proposed)** | **95.91%** | 96.32% | 95.91% | 95.92% |
-| Transformer (retrained) | 93.10% | 93.84% | 93.12% | 93.07% |
-| TCN (proposed) | 92.89% | 93.98% | 92.88% | 92.85% |
+| **GCN** | **95.91%** | 96.32% | 95.91% | 95.92% |
+| Transformer | 93.10% | 93.84% | 93.12% | 93.07% |
+| TCN | 92.89% | 93.98% | 92.88% | 92.85% |
 | Stacking ensemble (GCN+TCN+TF) | 94.18% | 94.72% | 94.19% | 94.15% |
 
 ## Repository structure
