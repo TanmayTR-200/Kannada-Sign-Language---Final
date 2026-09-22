@@ -15,6 +15,7 @@ of them.
 | Transformer | 91.59% | 92.30% | 91.60% | 91.40% |
 | TCN | 93.97% | 94.38% | 93.94% | 93.86% |
 | Stacking ensemble (GCN+TCN+TF) | 95.69% | 96.01% | 95.71% | 95.63% |
+| Soft-voting (diagnostic) | 96.12% | 96.37% | 96.12% | 96.09% |
 
 ## Repository structure
 
@@ -30,10 +31,12 @@ of them.
 │   ├── *.tflite              <- TensorFlow Lite conversions (on-device)
 │   ├── make_figures.py       <- generates the training-curve figures
 │   └── fig_*.png             <- paper figures
-├── Deep Learning Models/     <- earlier architecture notebooks (reference)
-├── Ensemble Learning/        <- original stacking-ensemble notebook
 ├── Feature Extraction/       <- MediaPipe landmark extraction notebook
 └── Dataset Description/      <- dataset documentation
+
+> Note: the earlier LSTM/BiLSTM notebooks and the original stacking-ensemble
+> notebook were removed; the TCN, GCN, and retrained Transformer in
+> `New Models/` are the current models.
 ```
 
 ## Dataset
