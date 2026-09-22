@@ -1,3 +1,0 @@
-TCN
-GCN
-Transformer
