@@ -64,8 +64,10 @@ def main():
     (X_tr, _), (X_va, y_va), (X_te, y_te) = split_70_10_20(X, y)
 
     # Each member gets EXACTLY the transform it was trained with.
+    # tcn.keras is the plain (75, 195) variant (no velocity channels);
+    # GCN uses centered graph + per-frame velocity; Transformer is raw.
     members = [
-        ("TCN", "tcn.keras", add_velocity_flat),
+        ("TCN", "tcn.keras", lambda X: X),
         ("GCN", "gcn.keras",
          lambda X: add_velocity(center_on_shoulders(flat_to_graph(X)))),
         ("Transformer", "transformer.keras", lambda X: X),
